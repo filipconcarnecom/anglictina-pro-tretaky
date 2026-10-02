@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Angličtina pro třeťáky</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f4ef;--card:#fff;--tx:#222;--mut:#777;--ac:#2f6fed;--ok:#1e9e5a;--bad:#d64545;--bd:#ddd}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171a1f;--card:#22262d;--tx:#eee;--mut:#9aa;--ac:#6b9bff;--ok:#43c983;--bad:#ff7070;--bd:#3a3f48}}
+:root[data-theme="dark"]{--bg:#171a1f;--card:#22262d;--tx:#eee;--mut:#9aa;--ac:#6b9bff;--ok:#43c983;--bad:#ff7070;--bd:#3a3f48}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:16px}
+main{max-width:560px;margin:0 auto}
+h1{font-size:1.4rem;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--bd);background:transparent;color:var(--tx);border-radius:20px;padding:6px 11px;font-size:.85rem;cursor:pointer}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+button.main{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-size:1rem;cursor:pointer}
+button.sec{background:transparent;color:var(--ac);border:0;cursor:pointer;font-size:.85rem;padding:4px}
+.q{font-size:2rem;text-align:center;margin:18px 0;font-weight:600}
+input{width:100%;font-size:1.2rem;padding:10px;border-radius:10px;border:2px solid var(--bd);background:var(--bg);color:var(--tx);box-sizing:border-box}
+.fb{min-height:1.6em;text-align:center;margin:10px 0;font-weight:600}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.bar{height:6px;background:var(--bd);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.bar i{display:block;height:100%;background:var(--ac);width:0}
+.mut{color:var(--mut);font-size:.85rem}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}td{padding:3px 4px;border-bottom:1px solid var(--bd)}
+.spk{background:transparent;border:0;cursor:pointer;font-size:1.2rem;padding:0 4px}
+.hide{display:none}
+</style></head><body><main>
+<h1>📚 Angličtina pro třeťáky</h1>
+<p class="mut" style="margin-top:-8px">Kateřina Chocholová · ZŠ Na Šutce</p>
+
+<div id="setup" class="card">
+  <div class="row"><b>Vyber lekce</b><span><button class="sec" onclick="sel(true)">vše</button><button class="sec" onclick="sel(false)">nic</button></span></div>
+  <div class="chips" id="chips" style="margin:10px 0 14px"></div>
+  <label class="mut" style="display:block;margin-bottom:12px"><input type="checkbox" id="auto" checked style="width:auto;vertical-align:middle"> Automaticky přehrát výslovnost po odpovědi</label>
+  <div class="row"><button class="main" onclick="start()">Začít test</button><button class="sec" onclick="toggleList()">Zobrazit seznam</button></div>
+  <div id="list" class="hide" style="margin-top:12px"></div>
+</div>
+
+<div id="quiz" class="card hide">
+  <div class="bar"><i id="pb"></i></div>
+  <div class="row mut"><span id="cnt"></span><button class="sec" onclick="home()">← zpět</button></div>
+  <div class="q" id="cz"></div>
+  <input id="in" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="anglicky…">
+  <div class="fb" id="fb"></div>
+  <div style="text-align:center"><button class="main" id="btn" onclick="act()">Zkontrolovat</button></div>
+</div>
+
+<div id="done" class="card hide" style="text-align:center">
+  <h2 style="margin-top:0">Hotovo! 🎉</h2>
+  <p id="sum"></p>
+  <button class="main" onclick="start()">Znovu</button>
+  <button class="sec" onclick="home()">Výběr lekcí</button>
+</div>
+</main>
+<script>
+// cesky>anglicky/varianta
+const U=[
+["1 · Školní pomůcky","pero>pen;tužka>pencil;penál>pencil case;taška>bag;kniha>book;pravítko>ruler;guma>rubber/eraser;ukázat na>point to;posaď se>sit down;vstaň>stand up;děkuji>thank you;pastelka>crayon;kancelářská sponka>paper clip;složka>folder;nůžky>scissors;lepidlo>glue;ořezávátko>sharpener;papír>paper;fix>marker"],
+["2 · Ve třídě","hodiny>clock;stůl>table;židle>chair;lavice>desk;okno>window;dveře>door;tabule>board"],
+["3 · Mazlíčci","kočka>cat;pes>dog;ryba>fish;pták>bird;králík>rabbit;myš>mouse;pavouk>spider;velký>big;malý>little"],
+["4 · Pocity","pocity>feelings;šťastný>happy;naštvaný>angry;smutný>sad;žíznivý>thirsty;vyděšený>scared;hladový>hungry;unavený>tired;jsem>i'm/i am;on je>he's/he is;ona je>she's/she is"],
+["5 · Obličej","obličej>face;vlasy>hair;nos>nose;oko>eye;pusa>mouth;ucho>ear;mám>i've got/i have got;dlouhý>long;krátký>short"],
+["6 · Rodina","máma>mum/mom;táta>dad;sestra>sister;bratr>brother;babička>grandma;dědeček>grandad/granddad;kolik>how many"],
+["7 · Tělo","hlava>head;tělo>body;noha>leg;chodidlo>foot;chodidla>feet;ruka (dlaň)>hand;paže>arm;tleskat>clap;mávat>wave;třást>shake;dupat>stamp;kopat>kick"],
+["8 · Oblečení","klobouk / čepice>hat;tričko>t-shirt/tshirt/t shirt;košile>shirt;bunda>jacket;svetr>jumper;kabát>coat;sukně>skirt;džíny>jeans;boty>shoes"],
+["9 · Jídlo a pití","kuře>chicken;pizza>pizza;salát>salad;zelenina>vegetable;hranolky>chips;klobásy>sausages;brambor>potato/potatoe;jablko>apple;pomeranč>orange;banán>banana;zmrzlina>ice cream/icecream;jogurt>yoghurt/yogurt;čokoláda>chocolate;vejce>egg;mít rád>like"],
+["10 · Zvířata","lev>lion;had>snake;hroch>hippo;slon>elephant;opice>monkey;krokodýl>crocodile;žirafa>giraffe;pštros>ostrich;tučňák>penguin;orel>eagle;papoušek>parrot"],
+["11 · Oblíbené věci","míč>ball;kytara>guitar;plakát>poster;rádio>radio;panenka>doll;letadlo>aeroplane/airplane;deštník>umbrella;klávesnice>keyboard;televize>tv/television"],
+["12 · Měsíce","leden>january;únor>february;březen>march;duben>april;květen>may;červen>june;červenec>july;srpen>august;září>september;říjen>october;listopad>november;prosinec>december"]
+].map(([n,s])=>({n,w:s.split(";").map(p=>{const[c,e]=p.split(">");const a=e.split("/");return{c,e:a[0],a}})}));
+
+const $=id=>document.getElementById(id);
+let on=new Set(U.map((_,i)=>i)),queue=[],total=0,cur=null,checked=false,firstTry=0,seen=new Set();
+
+function drawChips(){$("chips").innerHTML=U.map((u,i)=>`<button class="chip ${on.has(i)?"on":""}" onclick="tg(${i})">${u.n}</button>`).join("");if(!$("list").classList.contains("hide"))drawList()}
+function tg(i){on.has(i)?on.delete(i):on.add(i);drawChips()}
+function sel(v){on=v?new Set(U.map((_,i)=>i)):new Set();drawChips()}
+function drawList(){$("list").innerHTML=[...on].sort((a,b)=>a-b).map(i=>`<b>${U[i].n}</b><table>${U[i].w.map(w=>`<tr><td>${w.c}</td><td>${w.e}</td><td><button class="spk" onclick="speak(this.dataset.w)" data-w="${w.e}" title="Poslech">🔊</button></td></tr>`).join("")}</table><br>`).join("")||"<span class='mut'>Nic nevybráno.</span>"}
+function toggleList(){$("list").classList.toggle("hide");drawList()}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+const norm=s=>s.toLowerCase().replace(/[’`]/g,"'").replace(/\s+/g," ").trim();
+
+function show(id){["setup","quiz","done"].forEach(x=>$(x).classList.toggle("hide",x!==id))}
+function home(){show("setup")}
+function start(){
+  const pool=[];[...on].forEach(i=>U[i].w.forEach(w=>pool.push(w)));
+  if(!pool.length){alert("Vyber aspoň jednu lekci.");return}
+  queue=shuffle(pool.slice());total=queue.length;firstTry=0;seen=new Set();show("quiz");next();
+}
+function next(){
+  if(!queue.length){show("done");$("sum").textContent=`Napoprvé správně: ${firstTry} z ${total}`;return}
+  cur=queue[0];checked=false;
+  $("cz").textContent=cur.c;$("in").value="";$("in").disabled=false;$("fb").textContent="";$("btn").textContent="Zkontrolovat";
+  $("cnt").textContent=`Zbývá: ${queue.length}`;$("pb").style.width=(100*(total-new Set(queue).size)/total)+"%";
+  $("in").focus();
+}
+function act(){
+  if(checked){next();return}
+  const v=norm($("in").value);if(!v)return;
+  checked=true;$("in").disabled=true;
+  const ok=cur.a.some(a=>norm(a)===v);
+  if(ok){queue.shift();if(!seen.has(cur.c))firstTry++;$("fb").innerHTML='<span class="ok">✓ Správně!</span>'}
+  else{queue.shift();queue.push(cur);seen.add(cur.c);$("fb").innerHTML=`<span class="bad">✗ Správně: <u>${cur.e}</u></span>`}
+  $("fb").innerHTML+=' <button class="spk" onclick="speak(cur.e)" title="Poslech">🔊</button>';if($("auto").checked)speak(cur.e);
+  $("btn").textContent="Další";$("btn").focus();
+}
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&!$("quiz").classList.contains("hide")){e.preventDefault();act()}});
+function speak(t){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="en-GB";u.rate=.85;const vs=speechSynthesis.getVoices();const v=vs.find(v=>v.lang.replace("_","-")==="en-GB")||vs.find(v=>v.lang.startsWith("en"));if(v)u.voice=v;speechSynthesis.speak(u)}
+drawChips();
+</script></body></html>
